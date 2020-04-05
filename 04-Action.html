@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Action</title>
+</head>
+
+<body>
+    <div id="app">
+        <p>count: {{ count }}</p>
+        <button type="button" @click="increment1">+1</button>
+        <button type="button" @click="increment2({amount:2})">+2</button>
+    </div>
+    <script src="./lib/vue.js"></script>
+    <script src="./lib/vuex.js"></script>
+    <script src="./lib/mock.js"></script>
+    <script src="./lib/api.js"></script>
+    <script src="./lib/axios.js"></script>
+    <script>
+        const store = new Vuex.Store({
+            state: {
+                count: 0
+            },
+            mutations: {
+                increment1(state) {
+                    state.count++
+                },
+                increment2(state, payload) {
+                    state.count += payload.amount
+                }
+            },
+            actions: {
+                increment1(context) {
+                    context.commit('increment1')
+                },
+                // Actions 支持同样的载荷方式和对象方式进行分发
+                increment2(context, payload) {
+                    context.commit('increment2', payload);
+                    console.log("payload.amount=" + payload.amount);
+                },
+                incrementAsync({ commit, dispatch }) {
+                    // action 互相调用
+                    dispatch('increment1');
+                    return new Promise((resolve, reject) => {
+                        axios.get('http://api.com/count').then(({ data }) => {
+                            commit('increment2', { amount: data.count })
+                            resolve(data)
+                        })
+                    })
+                }
+            }
+        })
+        new Vue({
+            el: '#app',
+            store,
+            computed: {
+                ...Vuex.mapState(['count'])
+            },
+            methods: {
+                increment1() {
+                    this.$store.dispatch('increment1');
+                },
+                // 使用 mapActions 辅助函数将组件的 methods 映射为 store.dispatch 调用
+                ...Vuex.mapActions(['increment2']),
+                incrementAsync() {
+                    this.$store.dispatch('incrementAsync').then(data => console.log(data));
+                },
+            },
+            created() {
+                this.incrementAsync();
+            }
+        })
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module</title>
+</head>
+
+<body>
+    <div id="app">
+        <div>
+            <input type="text" v-model="countGlobal">
+            <button type="button" @click="increment">+</button>
+        </div>
+        <div>
+            <input type="text" v-model="countA">
+            <button type="button" @click="incrementA">+</button>
+        </div>
+    </div>
+    <script src="./lib/vue.js"></script>
+    <script src="./lib/vuex.js"></script>
+    <script>
+        const store = new Vuex.Store({
+            state: { count: 0 },
+            mutations: {
+                increment(state) {
+                    state.count++
+                }
+            },
+            // 默认情况下，模块内部的 action、mutation 和 getter 是注册在全局命名空间的
+            // 这样使得多个模块能够对同一 mutation 或 action 作出响应。
+            modules: {
+                moduleA: {
+                    state: { count: 1 },
+                    getters: {
+                        // 对于模块内部的 mutation 和 getter，接收的第一个参数是模块的局部状态对象
+                        doubleCount(state) {
+                            return state.count * 2
+                        },
+                        // 对于模块内部的 getter，根节点状态会作为第三个参数暴露出来
+                        sumWithRootCount(state, getters, rootState) {
+                            return state.count + rootState.count
+                        }
+                    },
+                    // 对于模块内部的 action，局部状态通过 context.state 暴露出来，根节点状态则为 context.rootState
+                    mutations: {
+                        incrementA(state) {
+                            // 这里的 `state` 对象是模块的局部状态
+                            state.count++
+                        }
+                    },
+                }
+            }
+        })
+
+        new Vue({
+            el: '#app',
+            store,
+            computed: {
+                countGlobal() {
+                    return this.$store.state.count
+                },
+                countA() {
+                    return this.$store.state.moduleA.count
+                }
+            },
+            methods: {
+                increment() {
+                    this.$store.commit('increment')
+                },
+                incrementA() {
+                    this.$store.commit('incrementA')
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>State</title>
+</head>
+
+<body>
+    <div id="app">
+        <p>count： {{ count }}</p>
+        <!-- <p>countAlias: {{ countAlias }}</p> -->
+        <!-- <p>countPlusLocalState: {{ countPlusLocalState }}</p> -->
+        <p>localComputed: {{ localComputed }}</p>
+        <counter></counter>
+    </div>
+    <script src="./lib/vue.js"></script>
+    <script src="./lib/vuex.js"></script>
+    <script>
+        const store = new Vuex.Store({
+            state: {
+                count: 1
+            }
+        })
+
+        const counter = {
+            template: `
+            <label for="childCounter">
+                childCounter：
+                <input id="childCounter" type="text" v-model="count">
+            </label>
+            `,
+            computed: {
+                count() {
+                    return store.state.count;
+                }
+            }
+        }
+
+        new Vue({
+            el: '#app',
+            store,
+            components: {
+                counter
+            },
+            data() {
+                return {
+                    localCount: 2
+                }
+            },
+            // 1.使用 mapState 辅助函数批量生成计算属性
+            // computed: Vuex.mapState({
+            //     // 箭头函数可使代码更简练
+            //     count: state => state.count,
+            //     // 传字符串参数 'count' 等同于 `state => state.count`
+            //     countAlias: 'count',
+            //     // 为了能够使用 `this` 获取局部状态，必须使用常规函数
+            //     countPlusLocalState(state) {
+            //         return state.count + this.localCount
+            //     }
+            // }),
+
+            // 2.当映射的计算属性的名称与 state 的子节点名称相同时，我们也可以给 mapState 传一个字符串数组。
+            // computed: Vuex.mapState([
+            //     'count',
+            // ]),
+
+            // 3.将mapState 函数返回的是一个对象与局部计算属性混合使用
+            computed: {
+                localComputed() {
+                    return this.localCount * 50;
+                },
+                // 使用对象展开运算符将此对象混入到外部对象中
+                ...Vuex.mapState({
+                    count: state => state.count
+                })
+            }
+        })
+    </script>
+</body>
+
+</html>

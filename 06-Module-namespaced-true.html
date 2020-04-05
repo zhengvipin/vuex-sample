@@ -1,0 +1,104 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Module</title>
+</head>
+
+<body>
+    <div id="app">
+        {{ sumWithRootCount }}
+        <div>
+            <input type="text" v-model="countGlobal">
+            <button type="button" @click="incrementGlobal">+</button>
+        </div>
+        <div>
+            <input type="text" v-model="countA">
+            <button type="button" @click="incrementA">+</button>
+        </div>
+        <button type="button" @click="incrementRoot">incrementRoot</button>
+    </div>
+    <script src="./lib/vue.js"></script>
+    <script src="./lib/vuex.js"></script>
+    <script>
+        const store = new Vuex.Store({
+            state: { count: 0 },
+            getters: {
+                doubleCount(state) {
+                    return state.count * 2
+                },
+            },
+            mutations: {
+                increment(state) {
+                    console.log("全局自增方法");
+                    state.count++
+                },
+            },
+            // 如果希望你的模块具有更高的封装度和复用性，你可以通过添加 namespaced: true 的方式使其成为带命名空间的模块
+            // 当模块被注册后，它的所有 getter、action 及 mutation 都会自动根据模块注册的路径调整命名
+            modules: {
+                moduleA: {
+                    namespaced: true,
+                    state: { count: 1 },
+                    // 如果你希望使用全局 state 和 getter，rootState 和 rootGetters 会作为第三和第四参数传入 getter
+                    getters: {
+                        sumWithRootCount(state, getters, rootState) {
+                            return state.count + rootState.count
+                        }
+                    },
+                    mutations: {
+                        increment(state) {
+                            console.log("局部自增方法");
+                            state.count++
+                        }
+                    },
+                    // 若需要在全局命名空间内分发 action 或提交 mutation，将 { root: true } 作为第三参数传给 dispatch 或 commit 即可。
+                    actions: {
+                        incrementRoot({ commit }, ) {
+                            console.log("root自增方法");
+                            commit('increment', null, { root: true });
+                        }
+                    }
+                }
+            }
+        })
+
+
+        const { mapState } = Vuex.createNamespacedHelpers('moduleA')
+
+        new Vue({
+            el: '#app',
+            store,
+            computed: {
+                countGlobal() {
+                    return this.$store.state.count
+                },
+                // countA() {
+                //     return this.$store.state.moduleA.count
+                // },
+                // 可以将模块的空间名称字符串作为第一个参数传递给上述函数，这样所有绑定都会自动将该模块作为上下文
+                // ...Vuex.mapState('moduleA', { 'countA': 'count' }),
+                ...mapState({ 'countA': 'count' }),
+                sumWithRootCount() {
+                    console.log(this.$store);
+                    return this.$store.getters['moduleA/sumWithRootCount']
+                },
+            },
+            methods: {
+                incrementGlobal() {
+                    this.$store.commit('increment')
+                },
+                incrementA() {
+                    this.$store.commit('moduleA/increment')
+                },
+                incrementRoot() {
+                    this.$store.dispatch('moduleA/incrementRoot')
+                }
+            }
+        })
+    </script>
+</body>
+
+</html>

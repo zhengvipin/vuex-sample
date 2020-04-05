@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Mutation</title>
+</head>
+
+<body>
+    <div id="app">
+        <p>count: {{ count }}</p>
+        <button type="button" @click="increment1">+1</button>
+        <button type="button" @click="increment2">+2</button>
+        <button type="button" @click="increment3">+3</button>
+        <button type="button" @click="increment4">+4</button>
+    </div>
+    <script src="./lib/vue.js"></script>
+    <script src="./lib/vuex.js"></script>
+    <script src="./lib/mutation-types.js"></script>
+    <script src="./lib/mock.js"></script>
+    <script src="./lib/api.js"></script>
+    <script src="./lib/axios.js"></script>
+    <script>
+        const store = new Vuex.Store({
+            state: {
+                count: 1
+            },
+            mutations: {
+                // 我们可以使用 ES2015 风格的计算属性命名功能来使用一个常量作为函数名
+                [INCREMENT_01](state) {
+                    state.count++;
+                },
+                // 你可以向 store.commit 传入额外的参数，即 mutation 的 载荷（payload）
+                [INCREMENT_02](state, n) {
+                    state.count += n;
+                },
+                // 在大多数情况下，载荷应该是一个对象，这样可以包含多个字段并且记录的 mutation 会更易读
+                [INCREMENT_03](state, payload) {
+                    state.count += payload.amount;
+                    console.log(payload.extra);
+                },
+                [SOME_MUTATION](state) {
+                    axios.get('http://api.com/count').then(({ data }) => {
+                        state.count += data.count;
+                    })
+                },
+            }
+        })
+
+        new Vue({
+            el: '#app',
+            store,
+            computed: {
+                ...Vuex.mapState(['count'])
+            },
+            methods: {
+                // 使用 mapMutations 辅助函数将组件中的 methods 映射为 store.commit 调用
+                ...Vuex.mapMutations([INCREMENT_01]),
+                increment2() {
+                    this.$store.commit(INCREMENT_02, 2);
+                },
+                increment3() {
+                    this.$store.commit(INCREMENT_03, { amount: 3, extra: 'Jack' });
+                },
+                // 提交 mutation 的另一种方式是直接使用包含 type 属性的对象
+                // 当使用对象风格的提交方式，整个对象都作为载荷传给 mutation 函数
+                increment4() {
+                    this.$store.commit({
+                        type: INCREMENT_03,
+                        amount: 4,
+                        extra: 'Jack'
+                    });
+                },
+            },
+            created() {
+                this.$store.commit(SOME_MUTATION);
+            }
+        })
+    </script>
+</body>
+
+</html>

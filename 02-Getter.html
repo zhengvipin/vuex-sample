@@ -1,0 +1,88 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Getter</title>
+</head>
+
+<body>
+    <div id="app">
+        <ul v-for="todo in doneTodos" :key="todo.id">
+            <li>{{ todo.id }}</li>
+            <li>{{ todo.text }}</li>
+        </ul>
+        <p>待完成任务<font color="red">{{ doneTodosCount }}</font>项</p>
+    </div>
+    <script src="./lib/vue.js"></script>
+    <script src="./lib/vuex.js"></script>
+    <script>
+        const store = new Vuex.Store({
+            state: {
+                todos: [
+                    { id: 1, text: '学习activeMq', done: true },
+                    { id: 2, text: '学习docker', done: false },
+                    { id: 3, text: '学习springCloud', done: false },
+                    { id: 4, text: '学习vue-cli3.0', done: false },
+                ],
+            },
+            // getters 用于处理需要从 store 中的 state 中派生出一些状态的情况，例如对列表进行过滤并计数
+            getters: {
+                doneTodos: state => {
+                    return state.todos.filter(todo => !todo.done);
+                },
+                // Getter 也可以接受其他 getter 作为第二个参数
+                doneTodosCount: (state, getters) => {
+                    return getters.doneTodos.length
+                },
+                // 通过让 getter 返回一个函数，来实现给 getter 传参
+                getTodoById: state => id => {
+                    return state.todos.filter(todo => todo.id === id);
+                }
+            }
+        })
+
+        new Vue({
+            el: '#app',
+            store,
+            // computed: {
+            //     doneTodos() {
+            //         return this.$store.getters.doneTodos;
+            //     },
+            //     doneTodosCount() {
+            //         return this.$store.getters.doneTodosCount;
+            //     },
+            //     getTodoById() {
+            //         return function (id) {
+            //             return this.$store.getters.getTodoById(id);
+            //         }
+            //     }
+            // },
+            // mapGetters 辅助函数仅仅是将 store 中的 getter 映射到局部计算属性
+            // computed: {
+            //     // 使用对象展开运算符将 getter 混入 computed 对象中
+            //     ...Vuex.mapGetters([
+            //         'doneTodos',
+            //         'doneTodosCount',
+            //         'getTodoById',
+            //     ])
+            // },
+            // 如果你想将一个 getter 属性另取一个名字，使用对象形式
+            computed: {
+                ...Vuex.mapGetters({
+                    'doneTodos': 'doneTodos',
+                    'doneTodosCount': 'doneTodosCount',
+                    'getTodoById': 'getTodoById',
+                    'getByOne': 'getTodoById',
+                })
+            },
+            mounted() {
+                console.log(JSON.stringify(this.getTodoById(1)));
+                console.log(JSON.stringify(this.getByOne(2)));
+            }
+        })
+    </script>
+</body>
+
+</html>
